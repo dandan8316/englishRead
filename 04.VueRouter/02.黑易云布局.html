@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <!-- 导入主页的样式 -->
+    <link rel="stylesheet" href="./css/index.css">
+    <!-- 导入图灵机器人的样式 -->
+    <link rel="stylesheet" href="./css/tuling.css">
+</head>
+
+<body>
+    <div id="blackclound">
+        <!-- 头部 -->
+        <div class='header'>
+            <img src="./img/top-left.png" alt="">
+            <ul>
+                <li> <router-link to="findMusic"> 发现音乐</li> </router-link>   
+                <li> <router-link to="myMusic"> 我的音乐</li> </router-link>   
+                <li> <router-link to="friend"> 朋友</li></router-link>
+                <li> <router-link to="tuling"> 图灵</li></router-link>
+                <li> <router-link to=""> 音乐人</li></router-link>
+                <li> <router-link to=""> 下载客户端</li>  </router-link>  
+            </ul>
+            <img src="./img/top-right.png" alt="">
+        </div>
+        <router-view></router-view>
+
+        <!-- 底部播放器 -->
+        <div class="player">
+            <img src="./img/bottom.png" alt="">
+        </div>
+    </div>
+</body>
+</html>
+<!-- 图灵机器人的模板 -->
+<script type="text/html" id="tuling">
+    <div id="container">
+        <div class="header">
+            <span style="float: left;">专业黑:就是微信聊天界面</span>
+            <span style="float: right;">动态获取</span>
+        </div>
+
+        <ul class="content">
+            <!-- <li><img src="./img/k.png" class="imgright"><span class="spanright">一岁一枯荣</span></li>
+            <li><img src="./img/l.png" class="imgleft"><span class="spanleft">好诗好诗</span></li> -->
+            <li v-for="(item, index) in messageList">
+                <img :src="'./img/'+(item.isSelf?'k.png':'l.png')" :class="'img'+(item.isSelf?'right':'left')">
+                <span :class="'span'+(item.isSelf?'right':'left')">{{item.message}}</span>
+            </li>
+        </ul>
+        <div class="footer">
+            <div id="user_face_icon">
+                <img src="./img/k.png" alt="">
+            </div>
+            <!-- .trim 去空格 (一般正常用户不会加) -->
+            <input id="text" @keyup.enter="chat" v-model.trim="inputValue" type="text" placeholder="说点什么吧...">
+            <span id="btn">发送</span>
+        </div>
+    </div>
+</script>
+<!-- Vue -->
+<!-- 图灵机器人依赖的jquery包 -->
+<script src="./lib/jquery-1.12.4.min.js"></script>
+<!-- vue包 -->
+<script src="https://unpkg.com/vue/dist/vue.js"></script>
+<!-- VueRouter Vue插件 -->
+<script src="https://unpkg.com/vue-router/dist/vue-router.js"></script>
+<script>
+     //定义组件
+     const findMusic = {
+         template:'<img src="./img/01.png">'
+     }
+     const myMusic = {
+         template:'<img src="./img/02.png">'
+     }
+     const friend = {
+         template:'<img src="./img/03.png">'
+     }
+       // 图灵机器人组件的 js部分
+    const tuling = Vue.component('tuling', {
+        // 写函数
+        data() {
+            return {
+                // 输入的内容 双向数据绑定
+                inputValue: '',
+                // 聊天的数组
+                messageList: [
+
+                ]
+            }
+        },
+        // 模板
+        template: '#tuling',
+        // 方法
+        methods: {
+            chat() {
+                // inputValue 属性获取数据
+                // 添加自己的数据
+                this.messageList.push({
+                    // 属性名是约定好的
+                    message: this.inputValue,
+                    isSelf: true
+                })
+                // 保存this 到that中
+                // let that = this;
+                // 聊起来
+                $.ajax({
+                    url: "http://www.tuling123.com/openapi/api",
+                    type: 'post',
+                    data: {
+                        key: 'd7c82ebd8b304abeacc73b366e42b9ed',
+                        info: this.inputValue
+                    },
+                    // success:function(backData){
+                    //     // console.log(backData);
+                    //     // 把机器人回我的信息添加到数组中
+                    //     that.messageList.push({
+                    //         message:backData.text,
+                    //         isSelf:false
+                    //     })
+                    // }
+                    success: (backData) => {
+                        // console.log(backData);
+                        // 把机器人回我的信息添加到数组中
+                        this.messageList.push({
+                            message: backData.text,
+                            isSelf: false
+                        })
+                    }
+                })
+            }
+        },
+    })
+
+
+    //定义路由规则
+    const routes = [{
+        path:'/findMusic',
+        component:findMusic
+
+    },
+    {
+        path:'/myMusic',
+        component:myMusic
+
+    },
+    {
+        path:'/friend',
+        component:friend
+
+    },
+    {
+        path:'/tuling',
+        component:tuling
+
+    },
+    ]
+    //创建路由实例对象 传入实例
+    const router = new VueRouter({
+        routes
+    })
+    //实例化Vue对象 把路由对象传入到Vue实例中
+    let app = new Vue({
+        el:"#blackclound",
+        router    
+    })
+
+
+
+</script>
+
+
+   

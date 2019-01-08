@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        .toggle-enter-active, .toggle-leave-active {
+         transition: opacity .5s;
+        }
+        .toggle-enter, .toggle-leave-to /* .toggle-leave-active below version 2.1.8 */ {
+         opacity: 0;
+        }
+        [v-cloak]{
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <input type="button" value="toggle" @click="isShow=!isShow">
+        <br>
+        <transition name="toggle" v-on:after-enter="afterEnter">
+            <img v-show="isShow" :src="imgUrl" alt="">
+        </transition>
+        <input type="button" value="查询天气" @click="searchWeather">
+        <h1 v-cloak>{{ganmao}}</h1>
+    </div>
+</body>
+
+</html>
+<!-- // vue-resource vue的插件 -->
+<script src="./lib/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue-resource@1.5.1"></script>
+<script>
+    let app = new Vue({
+        el: "#app",
+        data: {
+            // 切换显示跟隐藏的标记
+            isShow: false,
+            // 图片地址
+            imgUrl: './img/west.png',
+            // 提示信息
+            ganmao:''
+        },
+        methods: {
+            afterEnter(el) {
+                console.log(el);
+                // vue中不太建议大伙 直接操纵dom元素
+                // el.src="./img/again.png"
+                this.imgUrl = "./img/again.png";
+            },
+            searchWeather() {
+                this.$http.get('http://wthrcdn.etouch.cn/weather_mini?city=深圳')
+                    .then(res => {
+                        console.log(res);
+                        this.ganmao = res.body.data.ganmao;
+                    }, err => {})
+            }
+        }
+    })
+</script>

@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <!-- 导入图灵机器人的样式 -->
+    <link rel="stylesheet" href="./css/tuling.css">
+    <!-- 导入 todo的样式 -->
+    <link rel="stylesheet" href="./css/todo.css">
+    <!-- 导入music的样式 -->
+    <link rel="stylesheet" href="./css/music.css">
+    <!-- 自己的样式 -->
+    <style>
+        .tabbar{
+            height: 61px;
+        }
+        .tabbar a{
+            text-decoration: none;
+            color:white;
+            background-color: hotpink;
+            font-weight: 700;
+            padding: 20px;
+            margin: 10px;
+        }
+        .tabbar a.active{
+            background-color: deepskyblue;
+        }
+
+    </style>
+</head>
+
+<body>
+    
+    
+    <div id="app">
+        <!-- tabbar -->
+        <div class="tabbar">
+            <a @click="changeTab(0)" :class="{active:index==0}" href="#">聊天</a>
+            <a @click="changeTab(1)" :class="{active:index==1}" href="#">任务</a>
+            <a @click="changeTab(2)" :class="{active:index==2}" href="#">听歌</a>
+        </div>
+        <!-- tabcontent -->
+        <div class='tabcontent'>
+            <div v-show="index==0">
+                <!-- 聊天机器人 -->
+                <tuling></tuling>
+            </div>
+            <div v-show="index==1">
+                <!-- 任务清单 -->
+                <todo></todo>
+            </div>
+            <div v-show="index==2">
+                <!-- 黑云音乐 -->
+                <music></music>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
+<!-- 图灵机器人的模板 -->
+<script type="text/html" id="tuling">
+    <div id="container">
+        <div class="header">
+            <span style="float: left;">专业黑:就是微信聊天界面</span>
+            <span style="float: right;">动态获取</span>
+        </div>
+
+        <ul class="content">
+            <!-- <li><img src="./img/k.png" class="imgright"><span class="spanright">一岁一枯荣</span></li>
+            <li><img src="./img/l.png" class="imgleft"><span class="spanleft">好诗好诗</span></li> -->
+            <li v-for="(item, index) in messageList">
+                <img :src="'./img/'+(item.isSelf?'k.png':'l.png')" :class="'img'+(item.isSelf?'right':'left')">
+                <span :class="'span'+(item.isSelf?'right':'left')">{{item.message}}</span>
+            </li>
+        </ul>
+        <div class="footer">
+            <div id="user_face_icon">
+                <img src="./img/k.png" alt="">
+            </div>
+            <!-- .trim 去空格 (一般正常用户不会加) -->
+            <input id="text" @keyup.enter="chat" v-model.trim="inputValue" type="text" placeholder="说点什么吧...">
+            <span id="btn">发送</span>
+        </div>
+    </div>
+</script>
+<!-- todo的模板 -->
+<script type='text/html' id="todo">
+    <div class="todo-example">
+        <section class="todoapp">
+                <header class="header">
+                    <!-- 这里才是输入内容的位置 -->
+                    <h1>todos</h1>
+                    <input autofocus="autofocus" v-model.trim="newTodo" @keyup.enter="insertTodo" autocomplete="off"
+                        placeholder="What needs to be done?" class="new-todo">
+                </header>
+                <section class="main">
+                    <input type="checkbox" class="toggle-all" v-model="isCheckAll">
+                    <ul class="todo-list">
+                        <!-- 循环生成结构 -->
+                        <!-- 使用计算属性来返回循环的数组即可 -->
+                        <li class="todo" v-bind:class="{completed:item.isCompleted,editing:item==editTodo}" v-for="(item, index) in filterTodo">
+                            <div class="view">
+                                <!-- input 支持双向数据绑定 -->
+                                <input type="checkbox" v-model="item.isCompleted" class="toggle">
+                                <!-- 绑定双击事件 直接把当前循环的数据对象保存到 editTodo这个属性上 -->
+                                <label @dblclick="editTodo=item">{{item.info}}</label>
+                                <!-- 删除按钮 绑定点击事件 传入索引 -->
+                                <button class="destroy" @click="removeTodo(index)"></button>
+                            </div>
+                            <!-- 编辑框 -->
+                            <input type="text" v-focus @blur="editTodo=undefined" v-model="item.info" class="edit">
+                        </li>
+                    </ul>
+                </section>
+                <footer class="footer">
+                    <span class="todo-count" v-if="noComoletedNum!=0">
+                        <strong>{{noComoletedNum}}</strong>
+                        <!-- 0 不显示 -->
+                        <!-- 1 item left -->
+                        <!-- 2及以上 items left -->
+                        <span v-if="noComoletedNum==1">
+                            item left
+                        </span>
+                        <span v-else-if="noComoletedNum>1">
+                            items left
+                        </span>
+                    </span>
+                    <ul class="filters">
+                        <li><a href="#/all" class="" :class="{selected:filterOption=='All'}" @click="filterOption='All'">All</a></li>
+                        <li><a href="#/active" class="" :class="{selected:filterOption=='Active'}" @click="filterOption='Active'">Active</a></li>
+                        <li><a href="#/completed" class="" :class="{selected:filterOption=='Completed'}" @click="filterOption='Completed'">Completed</a></li>
+                    </ul> <button class="clear-completed" style="display: none;">
+                        Clear completed
+                    </button>
+                </footer>
+        </section>
+        <!-- 底部的声明 -->
+        <footer class="info">
+            <p>双击进入编辑</p>
+            <p>原作者 <a href="http://evanyou.me">尤雨溪</a></p>
+            <p>itheima<a href="http://www.itheima.com/">黑马程序员</a></p>
+            <p>感谢 <a href="http://todomvc.com">TodoMVC</a></p>
+        </footer>
+    </div>
+</script>
+
+<!-- 黑云音乐的模板 -->
+<script type="text/html" id="music">
+    <div id="music-tem">
+            <div class="left">
+                <input type="text" v-model="music" @keyup.enter="searchMusic" placeholder="请输入查询的音乐">
+                <transition-group name="bbq" tag="ul" v-on:after-enter="afterEnter">
+                    <li @dblclick="playMusic(item.id,item.album.id)" :style="{'transition-delay':index*100+'ms'}" v-for="(item, index) in musicList"
+                        :key="item.id">
+                        {{item.name}}---{{item.artists[0].name}}
+                    </li>
+                </transition-group>
+    
+            </div>
+            <div class="right">
+                <!-- 封面 -->
+                <img :src="picUrl" alt="" class="cover autoRotate" :class="{pause:isPause}">
+                <!-- 播放器 -->
+                <audio @pause="pause" @play="play" :src="songUrl" autoplay controls></audio>
+                <!-- 热门评论 -->
+                <ul>
+                    <li v-for="(item, index) in comments">
+                        <div class="left">
+                            <img :src="item.user.avatarUrl" alt="">
+                        </div>
+                        <div class="right">
+                            <a href="#">{{item.user.nickname}}</a> : {{item.content}}
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+</script>
+
+<!-- 导入vue.js -->
+<script src="./lib/vue.js"></script>
+<script src="./lib/jquery-1.12.4.min.js"></script>
+<script src="./lib/vue-resource.js"></script>
+<!-- 代码 -->
+<script>
+    // 图灵机器人组件的 js部分
+    Vue.component('tuling', {
+        // 写函数
+        data() {
+            return {
+                // 输入的内容 双向数据绑定
+                inputValue: '',
+                // 聊天的数组
+                messageList: [
+
+                ]
+            }
+        },
+        // 模板
+        template: '#tuling',
+        // 方法
+        methods: {
+            chat() {
+                // inputValue 属性获取数据
+                // 添加自己的数据
+                this.messageList.push({
+                    // 属性名是约定好的
+                    message: this.inputValue,
+                    isSelf: true
+                })
+                // 保存this 到that中
+                // let that = this;
+                // 聊起来
+                $.ajax({
+                    url: "http://www.tuling123.com/openapi/api",
+                    type: 'post',
+                    data: {
+                        key: 'd7c82ebd8b304abeacc73b366e42b9ed',
+                        info: this.inputValue
+                    },
+                    // success:function(backData){
+                    //     // console.log(backData);
+                    //     // 把机器人回我的信息添加到数组中
+                    //     that.messageList.push({
+                    //         message:backData.text,
+                    //         isSelf:false
+                    //     })
+                    // }
+                    success: (backData) => {
+                        // console.log(backData);
+                        // 把机器人回我的信息添加到数组中
+                        this.messageList.push({
+                            message: backData.text,
+                            isSelf: false
+                        })
+                    }
+                })
+            }
+        },
+    })
+
+    // todo用到的自定义指令 v-focus
+    Vue.directive('focus', {
+        // 当被绑定的元素插入到 DOM 中时……
+        // 注册自定义指令 相当于注册了一个回调函数
+        // 回调函数中有一个参数 这个参数 是写了这个指令的 dom元素
+        // inserted: function (el) {
+        //     console.log(el);
+        //     // 聚焦元素
+        //     el.focus()
+        // }
+
+        // 更新的时候触发(换了一个钩子函数(换了一个回调函数))
+        update: function (el) {
+            console.log(el);
+            // 聚焦元素
+            el.focus()
+        }
+    })
+
+    // todo组件的 js部分
+    Vue.component('todo', {
+        data() {
+            return {
+                // 输入的内容
+                newTodo: '',
+                // todo的数组 读取数据 转化为js数组 如果没有 使用 空数组替代
+                todoList: JSON.parse(window.localStorage.getItem('hTodo26')) || [],
+                // 当前编辑的那个li标签对应的数据对象(这里不用索引的目的是因为0是一个特殊的情况)
+                editTodo: undefined,
+                // 筛选条件
+                filterOption: 'All'
+            }
+        },
+        template: '#todo',
+        methods: {
+            // 插入新的todo
+            insertTodo() {
+                // 非空判断
+                if (this.newTodo == '') {
+                    alert('哥们,写点东西呗!!');
+                    return;
+                }
+                // 添加到数组中
+                this.todoList.push({
+                    info: this.newTodo,
+                    // 默认没有完成
+                    isCompleted: false
+                })
+                // 清空内容
+                this.newTodo = '';
+            }, // 删除点击的todo
+
+            // 删除对应的下标
+            removeTodo(index) {
+                this.todoList.splice(index, 1);
+            }
+        },
+        // 侦听器
+        watch: {
+            // 普通侦听器,只会观察 最外层的数据改变
+            // [] 增加 删除元素时候触发  内部的属性改变 不会触发
+            // todoList(newTodo,oldTodo){
+            //     console.log('改变啦');
+            // }
+            // 深度监听
+            // 不仅仅只观察数据的增删,内部的属性修改也会触发
+            todoList: {
+                // handler:function(val, oldVal) {
+                handler(val, oldVal) {
+                    console.log('深度监听')
+                    window.localStorage.setItem('hTodo26', JSON.stringify(this.todoList));
+
+                    // 计算未完成的个数
+                    let num = 0;
+                    this.todoList.forEach(v => {
+                        if (v.isCompleted == false) {
+                            num++;
+                        }
+                    })
+                    // 设置给 noCompletedNum 即可
+                    this.noCompletedNum = num;
+                },
+                // 设置深度监听
+                deep: true,
+            }
+        },
+        // 计算属性
+        computed: {
+            // 名字随便写 这里怎么写 上面怎么用
+            noComoletedNum() {
+                // 临时的数值
+                let num = 0;
+                // 遍历
+                this.todoList.forEach(v => {
+                    if (v.isCompleted == false) {
+                        // 累加
+                        num++;
+                    }
+                })
+                // 返回
+                return num;
+            },
+            // 根据 筛选条件 返回不一样的数组
+            filterTodo() {
+                // 根据filterOption的值 返回不同的内容即可
+                if (this.filterOption == 'All') {
+                    // 不需要筛选 返回所有
+                    return this.todoList;
+                } else if (this.filterOption == 'Active') {
+                    // 返回 isCompleted =false
+                    // 未完成
+                    let temArr = [];
+                    this.todoList.forEach(v => {
+                        if (v.isCompleted == false) {
+                            temArr.push(v);
+                        }
+                    })
+                    return temArr;
+                } else {
+                    // 已完成
+                    let temArr = [];
+                    this.todoList.forEach(v => {
+                        if (v.isCompleted == true) {
+                            temArr.push(v);
+                        }
+                    })
+                    return temArr;
+                }
+            }
+
+            // 计算属性 来计算 是否可以勾选 全选按钮
+            // 默认返回就是 get 取值 
+            // 如果要在赋值的时候干事情 还需要额外的写 set
+            // ,isCheckAll(){
+            //     console.log('重新计算啦!')
+            //     // 总个数 跟选中的个数的比较
+            //     let completedTodos = this.todoList.filter(v=>{
+            //         // 获取被选中的元素
+            //         if(v.isCompleted==true){
+            //             return true;
+            //         }
+            //     })
+
+            //     // 对比 选中的数组的长度 跟总数组的长度
+            //     return completedTodos.length == this.todoList.length;
+            // }
+            ,
+            isCheckAll: {
+                // 回调函数 
+                // 取值的时候触发 依赖的数据 改变时 也会触发
+                get() {
+                    // 总个数 跟选中的个数的比较
+                    return this.todoList.filter(v => {
+                        // 获取被选中的元素
+                        return v.isCompleted;
+                    }).length == this.todoList.length;
+                },
+                // 回调函数
+                // isCheckAll绑定给了checkbox checkbox的值 被我们通过鼠标点击修改了 就回触发
+                set(value) {
+                    // console.log(value);
+                    // 全选框的选中状态改变时 把 下面的单选框的选中状态变得跟他一样
+                    this.todoList.forEach(v => {
+                        v.isCompleted = value;
+                    })
+                }
+            }
+        },
+
+    })
+
+    // 黑云音乐的 js部分
+    Vue.component('music', {
+        data() {
+            return {
+                music: '',
+                // 结果数组
+                musicList: [],
+                // 歌曲的地址
+                songUrl: '',
+                // 封面信息
+                picUrl: '',
+                // 歌曲是否正在暂停
+                isPause: true,
+                // 评论的信息
+                comments: []
+            }
+        },
+        template: '#music',
+        methods: {
+            // 搜索歌曲
+            searchMusic() {
+                // 发请求 数据返回之后 渲染页面
+                this.$http.get(`https://autumnfish.cn/search?keywords=${this.music}`)
+                    .then(res => {
+                        console.log(res)
+                        this.musicList = res.body.result.songs;
+                    }, err => {})
+            }, // 接收id
+            // 播放歌曲
+            playMusic(id, albumId) {
+                // console.log(albumId);
+                // 获取歌曲的url
+                this.$http.get(`https://autumnfish.cn/song/url?id=${id}`)
+                    .then(res => {
+                        // console.log(res)
+                        // 设置歌曲url
+                        this.songUrl = res.body.data[0].url;
+                    }, err => {})
+                // 获取歌曲的专辑信息 专辑id
+                this.$http.get(`https://autumnfish.cn/album?id=${albumId}`)
+                    .then(res => {
+                        // console.log(res);
+                        // 设置图片url
+                        this.picUrl = res.body.album.blurPicUrl
+                    }, err => {})
+
+                // 获取歌曲的评论
+                // 普通评论接口
+                // this.$http.get(`https://autumnfish.cn/comment/music?id=${id}&limit=20&offset=1`)
+                // 替换为 热评接口
+                this.$http.get(`https://autumnfish.cn/comment/hot?id=${id}&type=0`)
+                    .then(res => {
+                        // console.log(res);
+                        // 保存起来
+                        this.comments = res.body.hotComments;
+                    }, err => {})
+            }, // 动画播放完毕回调函数(钩子函数)
+            afterEnter(el) {
+                // console.log(el);
+                el.style = '';
+            },
+            // 音频暂停
+            pause() {
+                console.log('挺辣');
+                // 已经暂停 不再播放了
+                this.isPause = true;
+            },
+            // 音频播放
+            play() {
+                console.log('播放');
+                // 开始播放 不在暂停了
+                this.isPause = false;
+            }
+        },
+    })
+
+    // 实例化Vue对象
+    let app = new Vue({
+        el: "#app",
+        data: {
+            index: 0
+        },
+        methods: {
+            changeTab(index) {
+                this.index = index;
+            }
+        }
+    })
+</script>

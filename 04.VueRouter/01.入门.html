@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="app">
+        <router-view></router-view>
+        <p>
+            <!-- 使用 router-link 组件来导航. -->
+            <!-- 通过传入 `to` 属性指定链接. -->
+            <!-- <router-link> 默认会被渲染成一个 `<a>` 标签 -->
+            <!-- to的值 会被解析为 href属性  /foo->#/foo  目的是不会跳转 但是 url会改变 -->
+            <!-- vue-router 提供的组件 -->
+            <router-link to="/foo">Go to Foo</router-link>
+            <router-link to="/bar">Go to Bar</router-link>
+            <router-link to="/bgz">我心飞翔</router-link>
+        </p>
+        <!-- 路由出口 -->
+        <!-- 路由匹配到的组件将渲染在这里 -->
+        <!-- 用来显示 某一个组件的位置  -->
+        <!-- 显示的 是 点击 当前命中的那个组件 -->
+        <router-view></router-view>
+    </div>
+</body>
+
+</html>
+<!-- Vue -->
+<script src="https://unpkg.com/vue/dist/vue.js"></script>
+<!-- VueRouter Vue插件 -->
+<script src="https://unpkg.com/vue-router/dist/vue-router.js"></script>
+<script>
+    // 0. 如果使用模块化机制编程，导入Vue和VueRouter，要调用 Vue.use(VueRouter)
+
+    // 1. 定义 (路由) 组件。
+    // 可以从其他文件 import 进来
+    const Foo = Vue.component('Foo', {
+        template: '<div>我是第一个组件 好醒目啊</div>'
+    })
+    const Bar = Vue.component("Bar", {
+        template: '<div>我是第二个组件 好醒目啊!!!</div>'
+    })
+    const bgz = Vue.component("bgz", {
+        template: '<div><img src="./img/83fc92ef00916a21b7dcd71fdb639987.png"/></div>'
+    })
+    // 2. 定义路由
+    // 定义了 地址 跟组件的对应关系
+    const routes = [{
+            // const route123s = [{
+            path: '/foo',
+            component: Foo
+        },
+        {
+            path: '/bar',
+            component: Bar
+        },
+        {
+            path: '/bgz',
+            component: bgz
+        },
+
+    ]
+
+    // 3. 创建 router 实例
+    // 实例化 路由对象 把定义的规则 传递进去了
+    const router = new VueRouter({
+        // routes: routes
+        routes // (缩写) 相当于 routes: routes
+        // routes:route123s
+    })
+
+    // 4. 创建和挂载根实例。
+    // 记得要通过 router 配置参数注入路由，
+    // 从而让整个应用都有路由功能
+    const app = new Vue({
+        // 把路由对象跟Vue实例关联起来
+        router,
+        el: "#app"
+    })
+    // .$mount('#app') // el:#app
+
+    // 现在，应用已经启动了！
+</script>

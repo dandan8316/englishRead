@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="app">
+        <smlile-img></smlile-img>
+    </div>
+</body>
+
+</html>
+<script src="./lib/vue.js"></script>
+<!-- template -->
+<script type="text/html" id="img">
+    <div class="img">
+        <img @click="changeIndex" :src="imgList[index]" />    
+    </div>
+</script>
+<script>
+    // 注册组件(创建组件)
+    Vue.component('smlile-img', {
+        // 让组件的数据时自己独有的
+        data() {
+            return {
+                // 图片地址数组
+                imgList: [
+                    './img/happy.png',
+                    './img/lesson.png',
+                    './img/son.gif',
+                    './img/goodsmile.png',
+                ],
+                // 图片索引
+                index: 0
+            }
+        },
+        methods: {
+            changeIndex() {
+                this.index++
+                if (this.index > this.imgList.length - 1) {
+                    this.index = 0;
+                }
+            }
+        },
+        // 组件的结构 模板
+        template: '#img'
+    })
+
+    // 实例化Vue对象
+    let app = new Vue({
+        el: '#app'
+    })
+</script>

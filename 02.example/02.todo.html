@@ -1,0 +1,340 @@
+<html>
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title></title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="googlebot" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+
+    <link rel="stylesheet" type="text/css" href="./css/result-light.css">
+
+    <link rel="stylesheet" type="text/css" href="./css/index.css">
+    <script type="text/javascript" src="./lib/vue.js"></script>
+
+    <style id="compiled-css" type="text/css">
+        [v-cloak] {
+            display: none;
+        }
+    </style>
+
+
+</head>
+
+<body>
+    <section class="todoapp">
+        <header class="header">
+            <!-- 这里才是输入内容的位置 -->
+            <h1>todos</h1>
+            <input autofocus="autofocus" v-model.trim="newTodo" @keyup.enter="insertTodo" autocomplete="off"
+                placeholder="What needs to be done?" class="new-todo">
+        </header>
+        <section class="main">
+            <input type="checkbox" class="toggle-all" v-model="isCheckAll">
+            <ul class="todo-list">
+                <!-- 循环生成结构 -->
+                <!-- 使用计算属性来返回循环的数组即可 -->
+                <li class="todo" v-bind:class="{completed:item.isCompleted,editing:item==editTodo}" v-for="(item, index) in filterTodo">
+                    <div class="view">
+                        <!-- input 支持双向数据绑定 -->
+                        <input type="checkbox" v-model="item.isCompleted" class="toggle">
+                        <!-- 绑定双击事件 直接把当前循环的数据对象保存到 editTodo这个属性上 -->
+                        <label @dblclick="editTodo=item">{{item.info}}</label>
+                        <!-- 删除按钮 绑定点击事件 传入索引 -->
+                        <button class="destroy" @click="removeTodo(index)"></button>
+                    </div>
+                    <!-- 编辑框 -->
+                    <input type="text" v-focus @blur="editTodo=undefined" v-model="item.info" class="edit">
+                </li>
+            </ul>
+        </section>
+        <footer class="footer">
+            <span class="todo-count" v-if="noComoletedNum!=0">
+                <strong>{{noComoletedNum}}</strong>
+                <!-- 0 不显示 -->
+                <!-- 1 item left -->
+                <!-- 2及以上 items left -->
+                <span v-if="noComoletedNum==1">
+                    item left
+                </span>
+                <span v-else-if="noComoletedNum>1">
+                    items left
+                </span>
+            </span>
+            <ul class="filters">
+                <li><a href="#/all" class="" :class="{selected:filterOption=='All'}" @click="filterOption='All'">All</a></li>
+                <li><a href="#/active" class="" :class="{selected:filterOption=='Active'}" @click="filterOption='Active'">Active</a></li>
+                <li><a href="#/completed" class="" :class="{selected:filterOption=='Completed'}" @click="filterOption='Completed'">Completed</a></li>
+            </ul> <button class="clear-completed" style="display: none;">
+                Clear completed
+            </button>
+        </footer>
+    </section>
+    <!-- 底部的声明 -->
+    <footer class="info">
+        <p>双击进入编辑</p>
+        <p>原作者 <a href="http://evanyou.me">尤雨溪</a></p>
+        <p>itheima<a href="http://www.itheima.com/">黑马程序员</a></p>
+        <p>感谢 <a href="http://todomvc.com">TodoMVC</a></p>
+    </footer>
+
+</body>
+
+</html>
+<script>
+    /*
+        1.准备工作
+            vue来实现这个案例
+            实例化Vue对象
+        2.数据格式:
+            有多条数据 []
+            每条数据需要包含
+                待办事项:info(string)
+                状态(2种):isCompleted(true/false)
+        3.添加数据
+            输入内容 去空格
+            点击回车
+            把数据 添加到数组中 格式需要根据需求添加
+            渲染到页面上 用vue的指令写特殊的符号
+            如果为空 提示用户 不添加
+            添加之后 清空内容
+        4.点击删除某一条
+            找到每一条li标签中的 .destory button
+            绑定点击事件
+            传入索引
+            增加方法
+            获取索引
+            删除数组指定下标的元素
+        5.完成某一项
+            class的切换 
+                如果isCompleted 为true 添加 completed 类名
+                反之移除类名 即可
+                使用v-bind进行类名的绑定 使用v-bind:class="{类名:布尔值}" 这种语法
+            checkbox的选中状态
+                true/false
+                使用双向数据绑定 同步每一项的checkbox 跟数据的isCompleted的值
+        6.数据常驻(除了本地缓存了解即可)
+            cookie
+                cookie可以使用js操纵
+                早期没有本地缓存是 经常使用cookie保存一些数据
+            本地缓存
+                localStroage
+                    只要不删除 都在
+                sessionStroage
+                    关闭浏览器结束(一次会话)
+            webSql indexDB
+                浏览器内部的一个小型数据库
+                可以让我们在浏览器中保存多一些数据
+            都是保存在浏览器中是不可控的 所以如果数据十分重要 一定要 在服务器的数据库中 再存一份
+
+            数据读取
+                页面打开时读取数据
+                JSON.parse(window.localStroage.getItem('key'))||[]
+            数据保存
+                数据修改时保存
+                    vue提供的侦听器 watch实现
+                浏览器关闭(刷新)  保存   window.localStroage.setItem('key',value);
+                    window.onbeforeunload = function(){
+                        // 只能保存字符串 JSON.stringify()
+                        window.localStroage.setItem('key',value);
+                    }
+        7.双击修改数据
+            绑定双击事件 给每一行的label
+            为点击这个li标签添加一个类名 editing 即可
+            隐藏在li中的input标签使用双向数据绑定
+            绑定当前数据的info,即可实现数据同步修改
+        8.退出编辑状态
+            为编辑框绑定失去焦点事件
+            失去焦点时 设置editTodo 为undefined 即可自动移除类名
+        9.未完成个数计算
+            数组中的每一项isCompleted=false的个数 为几个 下面显示几
+            1.计算属性:
+                    computed:
+                        通过返回值方式告诉Vue显示的内容
+                        如果代码中使用了data中的数据
+                        数据改变 计算属性会重新计算
+            2.侦听器:
+                    watch:
+                        data中的某个值改变会触发注册的回调函数
+                        设置deep才能检测到复杂数据内部值的改变
+                        设置immediate会立刻触发一次    
+        10.筛选逻辑
+            点击高亮当前的a标签
+                    在data中增加一个属性 用来保存点击的a标签
+                    根据这个属性的值决定哪个a标签增加高亮的类名
+            使用计算属性 根据
+                    filterOption这个属性的值 返回不一样的数组 让 循环去遍历
+                        
+    */
+
+    // 注册自定义指令 让 编辑框获得焦点
+    // 自定义指令:
+    Vue.directive('focus', {
+        // 当被绑定的元素插入到 DOM 中时……
+        // 注册自定义指令 相当于注册了一个回调函数
+        // 回调函数中有一个参数 这个参数 是写了这个指令的 dom元素
+        // inserted: function (el) {
+        //     console.log(el);
+        //     // 聚焦元素
+        //     el.focus()
+        // }
+
+        // 更新的时候触发(换了一个钩子函数(换了一个回调函数))
+        update: function (el) {
+            console.log(el);
+            // 聚焦元素
+            el.focus()
+        }
+    })
+
+    let app = new Vue({
+        el: '.todoapp',
+        data: {
+            // 输入的内容
+            newTodo: '',
+            // todo的数组 读取数据 转化为js数组 如果没有 使用 空数组替代
+            todoList: JSON.parse(window.localStorage.getItem('hTodo26')) || [],
+            // 当前编辑的那个li标签对应的数据对象(这里不用索引的目的是因为0是一个特殊的情况)
+            editTodo: undefined,
+            // 筛选条件
+            filterOption: 'All'
+        },
+        methods: {
+            // 插入新的todo
+            insertTodo() {
+                // 非空判断
+                if (this.newTodo == '') {
+                    alert('哥们,写点东西呗!!');
+                    return;
+                }
+                // 添加到数组中
+                this.todoList.push({
+                    info: this.newTodo,
+                    // 默认没有完成
+                    isCompleted: false
+                })
+                // 清空内容
+                this.newTodo = '';
+            }, // 删除点击的todo
+
+            // 删除对应的下标
+            removeTodo(index) {
+                this.todoList.splice(index, 1);
+            }
+        },
+        // 侦听器
+        watch: {
+            // 普通侦听器,只会观察 最外层的数据改变
+            // [] 增加 删除元素时候触发  内部的属性改变 不会触发
+            // todoList(newTodo,oldTodo){
+            //     console.log('改变啦');
+            // }
+            // 深度监听
+            // 不仅仅只观察数据的增删,内部的属性修改也会触发
+            todoList: {
+                // handler:function(val, oldVal) {
+                handler(val, oldVal) {
+                    console.log('深度监听')
+                    window.localStorage.setItem('hTodo26', JSON.stringify(this.todoList));
+
+                    // 计算未完成的个数
+                    let num = 0;
+                    this.todoList.forEach(v => {
+                        if (v.isCompleted == false) {
+                            num++;
+                        }
+                    })
+                    // 设置给 noCompletedNum 即可
+                    this.noCompletedNum = num;
+                },
+                // 设置深度监听
+                deep: true,
+            }
+        },
+        // 计算属性
+        computed: {
+            // 名字随便写 这里怎么写 上面怎么用
+            noComoletedNum() {
+                // 临时的数值
+                let num = 0;
+                // 遍历
+                this.todoList.forEach(v => {
+                    if (v.isCompleted == false) {
+                        // 累加
+                        num++;
+                    }
+                })
+                // 返回
+                return num;
+            },
+            // 根据 筛选条件 返回不一样的数组
+            filterTodo() {
+                // 根据filterOption的值 返回不同的内容即可
+                if (this.filterOption == 'All') {
+                    // 不需要筛选 返回所有
+                    return this.todoList;
+                } else if (this.filterOption == 'Active') {
+                    // 返回 isCompleted =false
+                    // 未完成
+                    let temArr = [];
+                    this.todoList.forEach(v => {
+                        if (v.isCompleted == false) {
+                            temArr.push(v);
+                        }
+                    })
+                    return temArr;
+                } else {
+                    // 已完成
+                    let temArr = [];
+                    this.todoList.forEach(v => {
+                        if (v.isCompleted == true) {
+                            temArr.push(v);
+                        }
+                    })
+                    return temArr;
+                }
+            }
+
+            // 计算属性 来计算 是否可以勾选 全选按钮
+            // 默认返回就是 get 取值 
+            // 如果要在赋值的时候干事情 还需要额外的写 set
+            // ,isCheckAll(){
+            //     console.log('重新计算啦!')
+            //     // 总个数 跟选中的个数的比较
+            //     let completedTodos = this.todoList.filter(v=>{
+            //         // 获取被选中的元素
+            //         if(v.isCompleted==true){
+            //             return true;
+            //         }
+            //     })
+
+            //     // 对比 选中的数组的长度 跟总数组的长度
+            //     return completedTodos.length == this.todoList.length;
+            // }
+            ,
+            isCheckAll: {
+                // 回调函数 
+                // 取值的时候触发 依赖的数据 改变时 也会触发
+                get() {
+                    // 总个数 跟选中的个数的比较
+                    return this.todoList.filter(v => {
+                        // 获取被选中的元素
+                        return v.isCompleted;
+                    }).length == this.todoList.length;
+                },
+                // 回调函数
+                // isCheckAll绑定给了checkbox checkbox的值 被我们通过鼠标点击修改了 就回触发
+                set(value) {
+                    // console.log(value);
+                    // 全选框的选中状态改变时 把 下面的单选框的选中状态变得跟他一样
+                    this.todoList.forEach(v => {
+                        v.isCompleted = value;
+                    })
+                }
+            }
+        },
+    })
+</script>
